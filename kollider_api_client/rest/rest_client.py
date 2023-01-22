@@ -1,7 +1,8 @@
-import requests
+import httpx
 import time
 from kollider_api_client.auth import auth_header
 from urllib.parse import urlencode
+from kollider_api_client.data_types import Order, Ticker
 
 BASE_URL = "http://127.0.0.1:8443"
 API_KEY = "<API_KEY>"
@@ -31,14 +32,14 @@ class KolliderRestClient(object):
 			if not self.api_key:
 				raise Exception("No api key found!")
 		return header
-	
+
 	def renew_jwt(self):
 		endpoint = self.base_url + "/auth/refresh_token"
 		body = {
 			"refresh": self.jwt_refresh
 		}
 		try:
-			resp = requests.post(endpoint, json=body)
+			resp = httpx.post(endpoint, json=body)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -48,7 +49,7 @@ class KolliderRestClient(object):
 		''' Returns all symbols and their specification that are availble to trade.'''
 		endpoint = self.base_url + "/market/products"
 		try:
-			resp = requests.get(endpoint)
+			resp = httpx.get(endpoint)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -63,12 +64,12 @@ class KolliderRestClient(object):
 		'''
 		endpoint = self.base_url + "/market/orderbook?symbol={}&level={}".format(symbol, level)
 		try:
-			resp = requests.get(endpoint)
+			resp = httpx.get(endpoint)
 			return resp.json()
 		except Exception as e:
 			print(e)
 
-	def get_ticker(self, symbol):
+	def get_ticker(self, symbol) -> Ticker:
 		'''
 		Returns the ticker for a given symbol
 		params:
@@ -76,8 +77,8 @@ class KolliderRestClient(object):
 		'''
 		endpoint = self.base_url + "/market/ticker?symbol={}".format(symbol)
 		try:
-			resp = requests.get(endpoint)
-			return resp.json()
+			resp = httpx.get(endpoint)
+			return Ticker.from_dict(resp.json())
 		except Exception as e:
 			print(e)
 
@@ -94,7 +95,7 @@ class KolliderRestClient(object):
 			raise Exception
 		endpoint += "?start={}&end={}".format(start, end)
 		try:
-			resp = requests.get(endpoint)
+			resp = httpx.get(endpoint)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -107,7 +108,7 @@ class KolliderRestClient(object):
 		route = self.base_url + base_path
 		try:
 			headers = self.__authorization_header("GET", base_path, None)
-			resp = requests.get(route, headers=headers)
+			resp = httpx.get(route, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -118,7 +119,7 @@ class KolliderRestClient(object):
 		route = self.base_url + base_path
 		try:
 			headers = self.__authorization_header("GET", base_path, None)
-			resp = requests.get(route, headers=headers)
+			resp = httpx.get(route, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -147,7 +148,7 @@ class KolliderRestClient(object):
 
 		try:
 			headers = self.__authorization_header("GET", base_path, auth_body)
-			resp = requests.get(route, headers=headers)
+			resp = httpx.get(route, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -167,7 +168,7 @@ class KolliderRestClient(object):
 		if start and end and end < start:
 			raise Exception
 		if limit is not None:
-			url["limit"] = limit 
+			url["limit"] = limit
 		if network is not None:
 			url["network"] = network
 		query = urlencode(url)
@@ -183,7 +184,7 @@ class KolliderRestClient(object):
 
 		try:
 			headers = self.__authorization_header("GET", base_path, auth_body)
-			resp = requests.get(route, headers=headers)
+			resp = httpx.get(route, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -203,9 +204,9 @@ class KolliderRestClient(object):
 		if start and end and end < start:
 			raise Exception
 		if limit is not None:
-			url["limit"] = limit 
+			url["limit"] = limit
 		if network is not None:
-			url["network"] = network 
+			url["network"] = network
 
 		query = urlencode(url)
 		route += "?" + query
@@ -219,7 +220,7 @@ class KolliderRestClient(object):
 
 		try:
 			headers = self.__authorization_header("GET", base_path, auth_body)
-			resp = requests.get(route, headers=headers)
+			resp = httpx.get(route, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -231,7 +232,7 @@ class KolliderRestClient(object):
 		endpoint = self.base_url + route
 		try:
 			headers = self.__authorization_header("GET", route, None)
-			resp = requests.get(endpoint, headers=headers)
+			resp = httpx.get(endpoint, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -242,7 +243,7 @@ class KolliderRestClient(object):
 		endpoint = self.base_url + route
 		try:
 			headers = self.__authorization_header("GET", route, None)
-			resp = requests.get(endpoint, headers=headers)
+			resp = httpx.get(endpoint, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -257,7 +258,7 @@ class KolliderRestClient(object):
 		}
 		try:
 			headers = self.__authorization_header("POST", route, body)
-			resp = requests.post(endpoint, json=body, headers=headers)
+			resp = httpx.post(endpoint, json=body, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -276,7 +277,7 @@ class KolliderRestClient(object):
 			body["payment_request"] = payment_request
 		try:
 			headers = self.__authorization_header("POST", route, body)
-			resp = requests.post(endpoint, json=body, headers=headers)
+			resp = httpx.post(endpoint, json=body, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -292,7 +293,7 @@ class KolliderRestClient(object):
 		}
 		try:
 			headers = self.__authorization_header("POST", route, body)
-			resp = requests.post(endpoint, json=body, headers=headers)
+			resp = httpx.post(endpoint, json=body, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -303,7 +304,7 @@ class KolliderRestClient(object):
 		body = order.to_dict()
 		try:
 			headers = self.__authorization_header("POST", route, body)
-			resp = requests.post(endpoint, json=body, headers=headers)
+			resp = httpx.post(endpoint, json=body, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
@@ -319,13 +320,14 @@ class KolliderRestClient(object):
 		endpoint += params
 		try:
 			headers = self.__authorization_header("DELETE", route, auth_body)
-			resp = requests.delete(endpoint, headers=headers)
+			resp = httpx.delete(endpoint, headers=headers)
 			return resp.json()
 		except Exception as e:
 			print(e)
 
 if "__main__" in __name__:
-	from kollider_api_client.data_types import Order
+	from kollider_api_client.data_types import Order, Ticker
+
 	cli = KolliderRestClient(BASE_URL, API_KEY, API_SECRET, API_PASSPHRASE)
 	order = Order()
 	order.symbol = "BTCUSD.PERP"
